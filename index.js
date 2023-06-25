@@ -1,12 +1,15 @@
-import { getPosts } from "./api.js";
+import { addPost, getPosts, getUserPost, getLike, delPost } from "./api.js";
 import { renderAddPostPageComponent } from "./components/add-post-page-component.js";
 import { renderAuthPageComponent } from "./components/auth-page-component.js";
 import {
   ADD_POSTS_PAGE,
   AUTH_PAGE,
+  LIKE_PAGE,
   LOADING_PAGE,
   POSTS_PAGE,
   USER_POSTS_PAGE,
+  DEL_PAGE,
+  TAG_POSTS_PAGE,
 } from "./routes.js";
 import { renderPostsPageComponent } from "./components/posts-page-component.js";
 import { renderLoadingPageComponent } from "./components/loading-page-component.js";
@@ -15,12 +18,16 @@ import {
   removeUserFromLocalStorage,
   saveUserToLocalStorage,
 } from "./helpers.js";
+import { renderUserPostPageComponent } from "./components/user-post-page-component.js";
 
+import { setError } from "./components/error.js";
+import { sleep } from "./components/function.js";
+const errorDiv = document.querySelector(".app_error");
 export let user = getUserFromLocalStorage();
 export let page = null;
 export let posts = [];
 
-const getToken = () => {
+export const getToken = () => {
   const token = user ? `Bearer ${user.token}` : undefined;
   return token;
 };
@@ -42,6 +49,9 @@ export const goToPage = (newPage, data) => {
       ADD_POSTS_PAGE,
       USER_POSTS_PAGE,
       LOADING_PAGE,
+      LIKE_PAGE,
+      DEL_PAGE,
+      TAG_POSTS_PAGE,
     ].includes(newPage)
   ) {
     if (newPage === ADD_POSTS_PAGE) {
@@ -51,6 +61,7 @@ export const goToPage = (newPage, data) => {
     }
 
     if (newPage === POSTS_PAGE) {
+
       page = LOADING_PAGE;
       renderApp();
 
@@ -61,17 +72,76 @@ export const goToPage = (newPage, data) => {
           renderApp();
         })
         .catch((error) => {
-          console.error(error);
+          const errorDiv = document.querySelector(".app_error");
+          if (error === 'Failed to fetch') {
+            setError(errorDiv, 'Остутстует интернет , или сервер не доступен.');
+          }
+          setError(errorDiv, 'Непредвиденная ошибка , попробуте перезагрузить страницу');
+          sleep(5000);
           goToPage(POSTS_PAGE);
+
         });
     }
 
     if (newPage === USER_POSTS_PAGE) {
+      const errorDiv = document.querySelector(".app_error");
       // TODO: реализовать получение постов юзера из API
-      console.log("Открываю страницу пользователя: ", data.userId);
-      page = USER_POSTS_PAGE;
-      posts = [];
-      return renderApp();
+      const id = data.userId;
+      return getUserPost({ id, token: getToken() })
+        .then((newPosts) => {
+          page = USER_POSTS_PAGE;
+          posts = newPosts;
+          renderApp();
+        })
+        .catch((error) => {
+          setError(errorDiv, error);
+
+          goToPage(USER_POSTS_PAGE);
+        });
+
+    }
+    if (newPage === DEL_PAGE) {
+
+      delPost({ token: getToken(), id: data.id });
+      page = POSTS_PAGE;
+      goToPage(POSTS_PAGE);
+    }
+    if (newPage === TAG_POSTS_PAGE) {
+ 
+      function filterItems(query) {
+        return posts.filter(function (el) {
+          return el.description.toLowerCase().indexOf(query.toLowerCase()) > -1;
+        })
+      }
+      const appEl = document.getElementById("app");
+      const id = data.id;
+      posts = filterItems(data.tagsearsh);
+      return renderPostsPageComponent({
+        appEl,
+      });
+
+    }
+    if (newPage === LIKE_PAGE) {
+      const id = data.id;
+      const param = data.param;
+      const onLike = id;
+      const appEl = document.querySelector(`.post_${id}`);
+    return getLike({ id, token: getToken(), like: param })
+        .then((newPosts) => {
+          posts.splice(0, posts.length);
+          posts.push(newPosts);
+          return renderPostsPageComponent({
+            appEl, id,
+          });
+        })
+        .catch((error) => {
+          const errorDiv = document.querySelector(".app_error");
+          if (error === 'Failed to fetch') {
+            setError(errorDiv, 'Остутстует интернет , или сервер не доступен.');
+          }
+          setError(errorDiv, 'Непредвиденная ошибка , попробуте перезагрузить страницу');
+          goToPage(AUTH_PAGE);
+        });
     }
 
     page = newPage;
@@ -111,11 +181,22 @@ const renderApp = () => {
       appEl,
       onAddPostClick({ description, imageUrl }) {
         // TODO: реализовать добавление поста в API
-        console.log("Добавляю пост...", { description, imageUrl });
-        goToPage(POSTS_PAGE);
+        return addPost({ token: getToken(), description, imageUrl })
+          .then((newPosts) => {
+            page = POSTS_PAGE;
+            goToPage(POSTS_PAGE);
+            renderApp();
+          })
+          .catch((error) => {
+            const errorDiv = document.querySelector(".app_error");
+            setError(errorDiv, error);
+          });
       },
     });
+
   }
+
+
 
   if (page === POSTS_PAGE) {
     return renderPostsPageComponent({
@@ -125,11 +206,18 @@ const renderApp = () => {
 
   if (page === USER_POSTS_PAGE) {
     // TODO: реализовать страницу фотографию пользвателя
+    return renderUserPostPageComponent({
+      appEl,
+    });
+
+
+
     appEl.innerHTML = "Здесь будет страница фотографий пользователя";
     return;
   }
 };
 
-goToPage(POSTS_PAGE);
 
-/**/
+
+
+goToPage(POSTS_PAGE);
