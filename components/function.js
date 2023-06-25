@@ -38,3 +38,4 @@ export function htmlSpecialChars(text) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;");
 }
+/*а*/

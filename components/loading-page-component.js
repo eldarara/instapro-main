@@ -17,3 +17,4 @@ export function renderLoadingPageComponent({ appEl, user, goToPage }) {
     goToPage,
   });
 }
+/*а*/

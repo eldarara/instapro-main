@@ -164,3 +164,4 @@ export function renderAuthPageComponent({ appEl, setUser }) {
 }
 
 
+/*а*/

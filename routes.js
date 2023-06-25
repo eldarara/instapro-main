@@ -7,3 +7,4 @@ export const LOADING_PAGE = "loading";
 export const LIKE_PAGE = "like";
 export const DEL_PAGE = "del";
 export const TAG_POSTS_PAGE ="tag";
+/*а*/

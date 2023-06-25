@@ -58,3 +58,4 @@ export function renderAddPostPageComponent({ appEl, onAddPostClick }) {
 
 }
 
+/*а*/

@@ -164,3 +164,4 @@ export function getLike({ id,token,like}) {
     return data.post;
   });
 }
+/*а*/

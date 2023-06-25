@@ -92,3 +92,4 @@ export function renderPostsPageComponent({ appEl, id }) {
   }
 
 }
+/*а*/

@@ -221,3 +221,4 @@ const renderApp = () => {
 
 
 goToPage(POSTS_PAGE);
+/*а*/

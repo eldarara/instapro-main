@@ -64,3 +64,4 @@ export function renderUserPostPageComponent({ appEl }) {
   }
 
 }
+/*а*/
